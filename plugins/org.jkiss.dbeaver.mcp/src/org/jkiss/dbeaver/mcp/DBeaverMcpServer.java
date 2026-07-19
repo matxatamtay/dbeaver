@@ -206,7 +206,7 @@ public final class DBeaverMcpServer {
       result.add("serverInfo", serverInfo);
       result.addProperty(
          "instructions",
-         "Use DBeaver's live connections to inspect databases and execute SQL. SQL writes require allow_write=true. Discovery tools report coverage and blind spots when metadata is incomplete."
+         "Use DBeaver's live connections to inspect databases and prepare visible SQL proposals. SQL execution requires dbeaver_prepare_sql_execution, native user confirmation inside DBeaver, and the resulting one-time approval ID. Discovery tools report coverage and blind spots when metadata is incomplete."
       );
       return result;
    }

@@ -73,7 +73,7 @@ final class DBeaverConnectionService {
       }
    }
 
-   private static DBPDataSourceContainer findConnection(String connection, String project) {
+   static DBPDataSourceContainer findConnection(String connection, String project) {
       List<DBPDataSourceContainer> exactId = new ArrayList<>();
       List<DBPDataSourceContainer> exactName = new ArrayList<>();
 

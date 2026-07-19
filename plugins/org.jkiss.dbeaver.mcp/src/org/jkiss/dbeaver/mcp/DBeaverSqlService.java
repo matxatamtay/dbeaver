@@ -21,6 +21,8 @@ import com.google.gson.JsonObject;
 import java.util.List;
 import org.jkiss.dbeaver.model.DBUtils;
 import org.jkiss.dbeaver.model.exec.DBCAttributeMetaData;
+import org.jkiss.dbeaver.model.exec.DBCExecutionContext;
+import org.jkiss.dbeaver.model.exec.DBCExecutionPurpose;
 import org.jkiss.dbeaver.model.exec.DBCResultSet;
 import org.jkiss.dbeaver.model.exec.DBCSession;
 import org.jkiss.dbeaver.model.exec.DBCStatement;
@@ -32,45 +34,49 @@ final class DBeaverSqlService {
    static final int MAX_ROWS = 1000;
    static final int DEFAULT_TIMEOUT_SECONDS = 30;
    static final int MAX_TIMEOUT_SECONDS = 300;
-   private final DBeaverConnectionService connections;
-
-   DBeaverSqlService(DBeaverConnectionService connections) {
-      this.connections = connections;
-   }
-
-   JsonObject execute(JsonObject arguments) throws Exception {
-      String sql = McpJson.requiredString(arguments, "sql");
-      int maxRows = McpJson.getInt(arguments, "max_rows", 200, 1, 1000);
-      int timeoutSeconds = McpJson.getInt(arguments, "timeout_seconds", 30, 1, 300);
-      boolean allowWrite = McpJson.getBoolean(arguments, "allow_write", false);
-      boolean readOnlySql = SqlSafety.isReadOnly(sql);
-      if (!allowWrite && !readOnlySql) {
-         throw new IllegalArgumentException("SQL may modify data or schema. Set allow_write=true to execute it explicitly.");
-      } else {
-         DBeaverConnectionService.ResolvedConnection connection = this.connections.resolve(arguments);
-         return execute(connection, sql, maxRows, timeoutSeconds, readOnlySql, allowWrite);
-      }
+   DBeaverSqlService() {
    }
 
    JsonObject query(DBeaverConnectionService.ResolvedConnection connection, String sql, int maxRows, int timeoutSeconds) throws Exception {
       if (!SqlSafety.isReadOnly(sql)) {
          throw new IllegalArgumentException("Internal MCP query must be read-only");
       } else {
-         return execute(connection, sql, maxRows, timeoutSeconds, true, false);
+         return execute(connection, null, sql, maxRows, timeoutSeconds, true);
       }
    }
 
+   JsonObject executeApproved(
+      DBeaverConnectionService.ResolvedConnection connection,
+      DBCExecutionContext executionContext,
+      String sql,
+      int maxRows,
+      int timeoutSeconds,
+      boolean readOnlySql
+   ) throws Exception {
+      if (executionContext != null && executionContext.getDataSource().getContainer() != connection.container()) {
+         throw new IllegalArgumentException("Editor execution context does not match the approved connection");
+      }
+      return execute(connection, executionContext, sql, maxRows, timeoutSeconds, readOnlySql);
+   }
+
    private static JsonObject execute(
-      DBeaverConnectionService.ResolvedConnection connection, String sql, int maxRows, int timeoutSeconds, boolean readOnlySql, boolean allowWrite
+      DBeaverConnectionService.ResolvedConnection connection,
+      DBCExecutionContext executionContext,
+      String sql,
+      int maxRows,
+      int timeoutSeconds,
+      boolean readOnlySql
    ) throws Exception {
       long startedAt = System.nanoTime();
       JsonObject payload = new JsonObject();
       payload.add("connection", DBeaverConnectionService.connectionPayload(connection.container()));
       payload.addProperty("connected_by_tool", connection.connectedByTool());
-      payload.addProperty("allow_write", allowWrite);
+      payload.addProperty("read_only", readOnlySql);
       payload.addProperty("max_rows", maxRows);
       VoidProgressMonitor monitor = new VoidProgressMonitor();
-      DBCSession session = DBUtils.openUtilSession(monitor, connection.dataSource(), "MCP SQL execution");
+      DBCSession session = executionContext != null
+         ? executionContext.openSession(monitor, DBCExecutionPurpose.USER, "MCP SQL execution")
+         : DBUtils.openUtilSession(monitor, connection.dataSource(), "MCP SQL execution");
 
       try {
          DBCStatement statement = session.prepareStatement(DBCStatementType.EXEC, sql, false, false, false);

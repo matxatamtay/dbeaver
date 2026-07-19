@@ -3,16 +3,20 @@ Bundle-ManifestVersion: 2
 Bundle-Vendor: DBeaver Corp
 Bundle-Name: DBeaver MCP Server
 Bundle-SymbolicName: org.jkiss.dbeaver.mcp;singleton:=true
-Bundle-Version: 1.0.0.qualifier
-Bundle-Release-Date: 20260716
+Bundle-Version: 1.1.0.qualifier
+Bundle-Release-Date: 20260720
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Bundle-ActivationPolicy: lazy
 Bundle-Activator: org.jkiss.dbeaver.mcp.McpStartup
 Require-Bundle: org.eclipse.ui,
  org.eclipse.jface,
+ org.eclipse.jface.text,
  org.eclipse.swt,
  org.jkiss.dbeaver.model,
- org.jkiss.dbeaver.registry
+ org.jkiss.dbeaver.registry,
+ org.jkiss.dbeaver.ui,
+ org.jkiss.dbeaver.ui.editors.base,
+ org.jkiss.dbeaver.ui.editors.sql
 Import-Package: org.osgi.framework
 Export-Package: org.jkiss.dbeaver.mcp
 Automatic-Module-Name: org.jkiss.dbeaver.mcp

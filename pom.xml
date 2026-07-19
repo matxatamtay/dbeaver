@@ -18,6 +18,9 @@
 
     <properties>
         <dbeaver-product>DBeaver</dbeaver-product>
+        <dbeaver-version>26.1.5</dbeaver-version>
+        <!-- Custom patch release: consume the latest published upstream CE P2 base. -->
+        <repo.p2.dbeaver.version>26.1.4</repo.p2.dbeaver.version>
 
         <key.storage.path>/etc/</key.storage.path>
         <tsa/>

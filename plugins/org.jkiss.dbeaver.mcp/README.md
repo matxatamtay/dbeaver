@@ -11,13 +11,38 @@ A control panel is available at **Window → Preferences → User Interface → 
 
 ## Tools
 
-### Workspace and SQL
+### Workspace and SQL editors
 
 - `dbeaver_status`
 - `dbeaver_list_connections`
+- `dbeaver_open_sql_editor`
+- `dbeaver_insert_sql`
+- `dbeaver_replace_sql`
+- `dbeaver_append_sql`
+- `dbeaver_focus_editor`
+- `dbeaver_save_sql_snippet`
+- `dbeaver_select_connection`
+- `dbeaver_propose_sql`
+- `dbeaver_get_active_editor`
+- `dbeaver_get_current_selection`
+
+### Confirmed execution and results
+
+- `dbeaver_prepare_sql_execution`
 - `dbeaver_execute_sql`
+- `dbeaver_cancel_sql_execution`
+- `dbeaver_get_last_result`
+- `dbeaver_fetch_result`
+- `dbeaver_get_last_queries`
 - `dbeaver_profile_query`
 - `dbeaver_explain_query`
+
+### Transactions
+
+- `dbeaver_get_transaction_status`
+- `dbeaver_begin_transaction`
+- `dbeaver_commit`
+- `dbeaver_rollback`
 
 ### Database discovery
 
@@ -55,15 +80,30 @@ A control panel is available at **Window → Preferences → User Interface → 
 
 Every discovery result reports `coverage` and `blind_spots` where the driver, current database user, dynamic SQL, or generic DBeaver model cannot provide complete information.
 
-## Safety model
+## Operator workflow and safety model
 
-`dbeaver_execute_sql` limits returned rows and applies a statement timeout. Statements that look mutating require `allow_write=true`. This check is a safety guard, not a database authorization boundary. Use read-only database credentials when an agent must not modify the database.
+The model cannot execute arbitrary SQL directly. The normal flow is:
+
+1. Use `dbeaver_propose_sql` or the editor tools so the SQL is visible in DBeaver.
+2. Call `dbeaver_prepare_sql_execution` with an editor ID, or with an explicit connection and SQL string.
+3. DBeaver shows a native confirmation dialog containing the exact connection, SQL, source, and read/write risk.
+4. Only when the user clicks **Run** does DBeaver issue a one-time approval ID. It expires after five minutes and is bound to the exact SQL and connection.
+5. Call `dbeaver_execute_sql` with only that approval ID. Replays, expired approvals, changed SQL, and changed connections are rejected.
+6. Read a small preview with `dbeaver_get_last_result`, then page through stored rows with `dbeaver_fetch_result`.
+
+Execution stores at most 1,000 rows per query, returns at most 20 rows in the preview, serves pages of at most 200 rows, caps individual string cells in previews/pages at 4,096 characters, and keeps the latest 50 operator executions in memory. `dbeaver_get_last_queries` reports only queries run through this operator bridge, not DBeaver's complete Query Manager history.
+
+Execution results are currently returned through MCP for analysis and paging. They are not mirrored into DBeaver's native SQL result grid yet.
+
+Editor-scoped execution reuses the editor execution context when available, so manual transaction mode can be preserved. `dbeaver_commit` and `dbeaver_rollback` show a separate native confirmation dialog. Use read-only database credentials when an agent must never modify the database because UI approval is not a database authorization boundary.
 
 Samples and observations mask sensitive-looking fields by default. Passwords, tokens, card numbers, and national identifiers remain masked even when ordinary masking is disabled.
 
 Table profiling defaults to `mode=quick`, which computes statistics from a bounded sample. `mode=full` requires `allow_full_scan=true` because it can scan the entire table once per column.
 
-`dbeaver_simulate_change` accepts one `INSERT`, `UPDATE`, `DELETE`, or `MERGE`, runs it in an isolated execution context, and rolls it back without committing. It requires explicit acknowledgement flags. Rollback cannot undo sequence increments, notifications, external service calls, files, jobs, or autonomous transactions.
+`dbeaver_simulate_change` accepts one `INSERT`, `UPDATE`, `DELETE`, or `MERGE`, shows a native DBeaver confirmation dialog, runs it in an isolated execution context, and rolls it back without committing. It still requires explicit acknowledgement flags. Rollback cannot undo sequence increments, notifications, external service calls, files, jobs, or autonomous transactions.
+
+`database` and `schema` parameters on editor opening are currently preserved as requested context for the operator response. Actual catalog/schema selection remains controlled by the DBeaver connection and editor defaults.
 
 ## Configuration
 
@@ -94,8 +134,8 @@ The DBeaver checkout expects a sibling `dbeaver-common` checkout. With the share
 
 ```bash
 mvn -f plugins/pom.xml -Pdesktop \
-  -pl org.jkiss.dbeaver.model,org.jkiss.dbeaver.registry,org.jkiss.dbeaver.mcp \
-  package -DskipTests
+  -pl org.jkiss.dbeaver.model,org.jkiss.dbeaver.registry,org.jkiss.dbeaver.ui,org.jkiss.dbeaver.ui.editors.base,org.jkiss.dbeaver.ui.editors.sql,org.jkiss.dbeaver.mcp \
+  -am package -DskipTests
 ```
 
 Standalone parser and safety tests live under `test/org/jkiss/dbeaver/mcp`.

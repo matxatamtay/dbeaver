@@ -30,12 +30,15 @@ final class DBeaverTools {
 
    static McpToolRegistry createRegistry(int port, boolean authRequired) {
       DBeaverConnectionService connections = new DBeaverConnectionService();
-      DBeaverSqlService sql = new DBeaverSqlService(connections);
+      DBeaverSqlService sql = new DBeaverSqlService();
       DBeaverObjectService objects = new DBeaverObjectService(connections);
       DBeaverDataService data = new DBeaverDataService(connections, sql, objects);
       DBeaverGraphService graphs = new DBeaverGraphService(connections, objects);
       DBeaverChangeService changes = new DBeaverChangeService(connections, objects);
       DBeaverSimulationService simulations = new DBeaverSimulationService(connections, objects);
+      DBeaverEditorService editors = new DBeaverEditorService();
+      DBeaverExecutionStore executions = new DBeaverExecutionStore();
+      DBeaverOperatorService operator = new DBeaverOperatorService(connections, sql, editors, executions, simulations);
       McpToolRegistry registry = new McpToolRegistry();
       registry.register(
          new McpTool(
@@ -64,36 +67,315 @@ final class DBeaverTools {
             connections::listConnections
          )
       );
+      registerOperatorTools(registry, editors, operator);
+      registerUnderstandingTools(registry, objects, data, graphs, changes, operator);
+      return registry;
+   }
+
+   private static void registerOperatorTools(
+      McpToolRegistry registry,
+      DBeaverEditorService editors,
+      DBeaverOperatorService operator
+   ) {
       registry.register(
          new McpTool(
-            "dbeaver_execute_sql",
-            "Execute SQL through a live DBeaver connection. Read queries are allowed by default. Statements that may modify data or schema require allow_write=true.",
+            "dbeaver_open_sql_editor",
+            "Open a new visible SQL console in DBeaver and return a stable editor ID for later UI operations.",
             McpJson.objectSchema(
                props(
                   "connection",
                   McpJson.stringProperty("Required DBeaver connection ID or exact name."),
                   "project",
-                  McpJson.stringProperty("Optional exact project name used to disambiguate connections."),
+                  McpJson.stringProperty("Optional exact project name used to disambiguate connection names."),
+                  "database",
+                  McpJson.stringProperty("Optional requested database/catalog context. DBeaver connection defaults remain authoritative."),
+                  "schema",
+                  McpJson.stringProperty("Optional requested schema context. DBeaver connection defaults remain authoritative."),
+                  "title",
+                  McpJson.stringProperty("Optional editor title. Default LCA SQL."),
                   "sql",
-                  McpJson.stringProperty("Required SQL statement to execute."),
-                  "max_rows",
-                  McpJson.integerProperty("Maximum returned rows, from 1 to 1000. Default 200.", 1, 1000),
-                  "timeout_seconds",
-                  McpJson.integerProperty("Statement timeout in seconds, from 1 to 300. Default 30.", 1, 300),
-                  "auto_connect",
-                  McpJson.booleanProperty("Connect the data source automatically when needed. Default true."),
-                  "allow_write",
-                  McpJson.booleanProperty("Explicitly allow statements that may modify data or schema. Default false.")
+                  McpJson.stringProperty("Optional initial SQL text.")
                ),
-               List.of("connection", "sql")
+               List.of("connection")
+            ),
+            false,
+            false,
+            editors::openEditor
+         )
+      );
+      registry.register(
+         new McpTool(
+            "dbeaver_insert_sql",
+            "Insert SQL at the current editor selection, replacing selected text when present.",
+            McpJson.objectSchema(
+               props(
+                  "editor_id",
+                  McpJson.stringProperty("Required editor ID from dbeaver_open_sql_editor or dbeaver_get_active_editor."),
+                  "sql",
+                  McpJson.stringProperty("Required SQL text to insert.")
+               ),
+               List.of("editor_id", "sql")
+            ),
+            false,
+            false,
+            editors::insertSql
+         )
+      );
+      registry.register(
+         new McpTool(
+            "dbeaver_replace_sql",
+            "Replace the complete SQL editor document and optionally select all proposed text.",
+            McpJson.objectSchema(
+               props(
+                  "editor_id",
+                  McpJson.stringProperty("Required SQL editor ID."),
+                  "sql",
+                  McpJson.stringProperty("Required replacement SQL, which may be empty."),
+                  "select_all",
+                  McpJson.booleanProperty("Select the complete replacement after editing. Default true.")
+               ),
+               List.of("editor_id", "sql")
+            ),
+            false,
+            false,
+            editors::replaceSql
+         )
+      );
+      registry.register(
+         new McpTool(
+            "dbeaver_append_sql",
+            "Append SQL to the end of a visible DBeaver SQL editor.",
+            McpJson.objectSchema(
+               props(
+                  "editor_id",
+                  McpJson.stringProperty("Required SQL editor ID."),
+                  "sql",
+                  McpJson.stringProperty("Required SQL text to append.")
+               ),
+               List.of("editor_id", "sql")
+            ),
+            false,
+            false,
+            editors::appendSql
+         )
+      );
+      registry.register(
+         new McpTool(
+            "dbeaver_focus_editor",
+            "Activate and focus a known DBeaver SQL editor without executing anything.",
+            McpJson.objectSchema(
+               Map.of("editor_id", McpJson.stringProperty("Required SQL editor ID.")),
+               List.of("editor_id")
+            ),
+            false,
+            false,
+            editors::focusEditor
+         )
+      );
+      registry.register(
+         new McpTool(
+            "dbeaver_save_sql_snippet",
+            "Open DBeaver's Save As flow for a known SQL editor.",
+            McpJson.objectSchema(
+               Map.of("editor_id", McpJson.stringProperty("Required SQL editor ID.")),
+               List.of("editor_id")
+            ),
+            false,
+            false,
+            editors::saveSqlSnippet
+         )
+      );
+      registry.register(
+         new McpTool(
+            "dbeaver_select_connection",
+            "Change the connection associated with a visible DBeaver SQL editor.",
+            McpJson.objectSchema(
+               props(
+                  "editor_id",
+                  McpJson.stringProperty("Required SQL editor ID."),
+                  "connection",
+                  McpJson.stringProperty("Required DBeaver connection ID or exact name."),
+                  "project",
+                  McpJson.stringProperty("Optional exact project name used to disambiguate connection names.")
+               ),
+               List.of("editor_id", "connection")
+            ),
+            false,
+            false,
+            editors::selectConnection
+         )
+      );
+      registry.register(
+         new McpTool(
+            "dbeaver_propose_sql",
+            "Create a visible SQL proposal artifact in DBeaver, select it, and return a bounded diff. This never executes SQL.",
+            McpJson.objectSchema(
+               props(
+                  "editor_id",
+                  McpJson.stringProperty("Optional target editor ID. When omitted, use the active SQL editor or open a new one."),
+                  "connection",
+                  McpJson.stringProperty("Connection ID or exact name required only when a new editor must be opened."),
+                  "project",
+                  McpJson.stringProperty("Optional exact project name."),
+                  "database",
+                  McpJson.stringProperty("Optional requested database/catalog context for a newly opened editor."),
+                  "schema",
+                  McpJson.stringProperty("Optional requested schema context for a newly opened editor."),
+                  "title",
+                  McpJson.stringProperty("Optional title for a newly opened editor."),
+                  "sql",
+                  McpJson.stringProperty("Required proposed SQL text.")
+               ),
+               List.of("sql")
+            ),
+            false,
+            false,
+            editors::proposeSql
+         )
+      );
+      registry.register(
+         new McpTool(
+            "dbeaver_get_active_editor",
+            "Return the active DBeaver SQL editor ID, title, connection, and document length.",
+            McpJson.objectSchema(Map.of()),
+            true,
+            false,
+            editors::getActiveEditor
+         )
+      );
+      registry.register(
+         new McpTool(
+            "dbeaver_get_current_selection",
+            "Return selected SQL and the active statement from a DBeaver SQL editor.",
+            McpJson.objectSchema(
+               Map.of("editor_id", McpJson.stringProperty("Optional SQL editor ID. Defaults to the active editor."))
+            ),
+            true,
+            false,
+            editors::getCurrentSelection
+         )
+      );
+      registry.register(
+         new McpTool(
+            "dbeaver_prepare_sql_execution",
+            "Show DBeaver's native confirmation dialog for exact SQL and connection. On approval, return a one-time token valid for five minutes. This step does not execute SQL.",
+            McpJson.objectSchema(
+               props(
+                  "editor_id",
+                  McpJson.stringProperty("Optional editor ID. Uses its selection, active statement, or document."),
+                  "connection",
+                  McpJson.stringProperty("Connection ID or exact name required when editor_id is omitted."),
+                  "project",
+                  McpJson.stringProperty("Optional exact project name."),
+                  "sql",
+                  McpJson.stringProperty("SQL required when editor_id is omitted."),
+                  "max_rows",
+                  McpJson.integerProperty("Maximum stored result rows. Default 200, maximum 1000.", 1, 1000),
+                  "timeout_seconds",
+                  McpJson.integerProperty("Statement timeout in seconds. Default 30, maximum 300.", 1, 300),
+                  "auto_connect",
+                  McpJson.booleanProperty("Connect the data source when offline. Default true.")
+               )
+            ),
+            false,
+            false,
+            operator::prepareExecution
+         )
+      );
+      registry.register(
+         new McpTool(
+            "dbeaver_execute_sql",
+            "Execute only a previously approved, exact SQL request. Requires the one-time token returned by dbeaver_prepare_sql_execution.",
+            McpJson.objectSchema(
+               Map.of("approval_id", McpJson.stringProperty("Required one-time execution approval ID.")),
+               List.of("approval_id")
             ),
             false,
             true,
-            sql::execute
+            operator::executeApproved
          )
       );
-      registerUnderstandingTools(registry, objects, data, graphs, changes, simulations);
-      return registry;
+      registry.register(
+         new McpTool(
+            "dbeaver_cancel_sql_execution",
+            "Cancel an unused one-time SQL execution approval.",
+            McpJson.objectSchema(
+               Map.of("approval_id", McpJson.stringProperty("Required approval ID to cancel.")),
+               List.of("approval_id")
+            ),
+            false,
+            false,
+            operator::cancelExecution
+         )
+      );
+      registry.register(
+         new McpTool(
+            "dbeaver_get_last_result",
+            "Return metadata, columns, and a small preview for the last SQL execution performed through the operator bridge.",
+            McpJson.objectSchema(Map.of()),
+            true,
+            false,
+            operator::getLastResult
+         )
+      );
+      registry.register(
+         new McpTool(
+            "dbeaver_fetch_result",
+            "Fetch a bounded page from a stored operator execution result without putting the complete result into model context.",
+            McpJson.objectSchema(
+               props(
+                  "execution_id",
+                  McpJson.stringProperty("Optional execution ID. Defaults to the last execution."),
+                  "page",
+                  McpJson.integerProperty("One-based page number. Default 1.", 1, 1000000),
+                  "page_size",
+                  McpJson.integerProperty("Rows per page. Default 100, maximum 200.", 1, 200)
+               )
+            ),
+            true,
+            false,
+            operator::fetchResult
+         )
+      );
+      registry.register(
+         new McpTool(
+            "dbeaver_get_last_queries",
+            "Return recent SQL executed through this MCP operator bridge. It does not expose DBeaver's complete global query manager history.",
+            McpJson.objectSchema(
+               Map.of("limit", McpJson.integerProperty("Maximum history entries. Default 20, maximum 100.", 1, 100))
+            ),
+            true,
+            false,
+            operator::getLastQueries
+         )
+      );
+      registerTransactionTool(registry, "dbeaver_get_transaction_status", "Read transaction state for a SQL editor.", true, false, operator::getTransactionStatus);
+      registerTransactionTool(registry, "dbeaver_begin_transaction", "Disable auto-commit for the SQL editor execution context.", false, false, operator::beginTransaction);
+      registerTransactionTool(registry, "dbeaver_commit", "Show native confirmation and commit the SQL editor's current manual transaction.", false, true, operator::commit);
+      registerTransactionTool(registry, "dbeaver_rollback", "Show native confirmation and roll back the SQL editor's current manual transaction.", false, true, operator::rollback);
+   }
+
+   private static void registerTransactionTool(
+      McpToolRegistry registry,
+      String name,
+      String description,
+      boolean readOnly,
+      boolean destructive,
+      McpTool.Handler handler
+   ) {
+      registry.register(
+         new McpTool(
+            name,
+            description,
+            McpJson.objectSchema(
+               Map.of("editor_id", McpJson.stringProperty("Required SQL editor ID.")),
+               List.of("editor_id")
+            ),
+            readOnly,
+            destructive,
+            handler
+         )
+      );
    }
 
    private static void registerUnderstandingTools(
@@ -102,7 +384,7 @@ final class DBeaverTools {
       DBeaverDataService data,
       DBeaverGraphService graphs,
       DBeaverChangeService changes,
-      DBeaverSimulationService simulations
+      DBeaverOperatorService operator
    ) {
       registry.register(
          new McpTool(
@@ -539,7 +821,7 @@ final class DBeaverTools {
             ),
             false,
             true,
-            simulations::simulateChange
+            operator::simulateChange
          )
       );
       registry.register(
