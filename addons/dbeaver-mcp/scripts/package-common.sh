@@ -56,13 +56,14 @@ ensure_java_runtime() {
     rm -rf "$runtime"
     mkdir -p "$package_work"
     "$java_home/bin/jlink" \
+      --module-path "$java_home/jmods" \
       --add-modules ALL-MODULE-PATH \
       --bind-services \
       --strip-debug \
       --no-man-pages \
       --no-header-files \
       --compress=zip-6 \
-      --output "$runtime"
+      --output "$runtime" >&2
     printf '%s' "$current" > "$marker"
   fi
   printf '%s\n' "$runtime"
