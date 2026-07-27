@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dbeaver-mcp.local/schema/test-plan-1.0.json",
+  "title": "DBeaver AI Database Test Studio Plan",
+  "type": "object",
+  "required": ["schema_version", "id", "name", "targets", "steps"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9._-]{1,128}$"},
+    "name": {"type": "string", "minLength": 1, "maxLength": 200},
+    "targets": {"type": "object", "minProperties": 1},
+    "variables": {"type": "object"},
+    "setup": {"type": "array", "maxItems": 100},
+    "steps": {"type": "array", "minItems": 1, "maxItems": 500},
+    "cleanup": {"type": "array", "maxItems": 100},
+    "evidence": {"type": "object"},
+    "policy": {"type": "object"}
+  },
+  "additionalProperties": true
+}

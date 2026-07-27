@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<schema targetNamespace="org.jkiss.dbeaver.mcp" xmlns="http://www.w3.org/2001/XMLSchema">
+   <annotation>
+      <appinfo><meta.schema plugin="org.jkiss.dbeaver.mcp" id="toolProvider" name="DBeaver MCP Tool Provider"/></appinfo>
+      <documentation>Contributes additive MCP tools without modifying the core DBeaver MCP bundle.</documentation>
+   </annotation>
+   <element name="extension">
+      <complexType>
+         <sequence><element ref="provider" minOccurs="1" maxOccurs="unbounded"/></sequence>
+         <attribute name="point" type="string" use="required"/>
+         <attribute name="id" type="string"/>
+         <attribute name="name" type="string"/>
+      </complexType>
+   </element>
+   <element name="provider">
+      <complexType>
+         <attribute name="class" type="string" use="required">
+            <annotation><appinfo><meta.attribute kind="java" basedOn="org.jkiss.dbeaver.mcp.DBeaverMcpToolProvider:"/></appinfo></annotation>
+         </attribute>
+         <attribute name="priority" type="string"/>
+      </complexType>
+   </element>
+   <annotation><appinfo><meta.section type="since"/><meta.section type="examples"/><meta.section type="apiInfo"/><meta.section type="implementation"/><meta.section type="copyright"/></appinfo></annotation>
+</schema>

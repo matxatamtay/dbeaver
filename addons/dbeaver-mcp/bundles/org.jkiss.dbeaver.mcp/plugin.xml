@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+    <extension-point
+        id="toolProvider"
+        name="DBeaver MCP Tool Provider"
+        schema="schema/toolProvider.exsd"/>
+
+    <extension point="org.eclipse.ui.startup">
+        <startup class="org.jkiss.dbeaver.mcp.McpStartup"/>
+    </extension>
+
+    <extension point="org.eclipse.ui.preferencePages">
+        <page
+            category="org.jkiss.dbeaver.preferences.main"
+            class="org.jkiss.dbeaver.mcp.McpPreferencePage"
+            id="org.jkiss.dbeaver.preferences.mcp"
+            name="MCP Server">
+            <keywordReference id="org.jkiss.dbeaver.core.keyword.dbeaver"/>
+        </page>
+    </extension>
+</plugin>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="org.jkiss.dbeaver.teststudio.core" xmlns="http://www.w3.org/2001/XMLSchema">
+ <element name="extension"><complexType><sequence><element ref="provider" minOccurs="1" maxOccurs="unbounded"/></sequence><attribute name="point" type="string" use="required"/></complexType></element>
+ <element name="provider"><complexType><attribute name="class" type="string" use="required"><annotation><appinfo><meta.attribute kind="java" basedOn="org.jkiss.dbeaver.teststudio.spi.StudioBridge:"/></appinfo></annotation></attribute><attribute name="priority" type="string"/></complexType></element>
+</schema>

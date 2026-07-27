@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y jq rsync
+      - name: Resolve current supported DBeaver ref
+        id: matrix
+        run: echo "ref=$(jq -r '.supported[] | select(.name==\"current\") | .dbeaver_ref' config/compatibility-matrix.json)" >> "$GITHUB_OUTPUT"
+      - name: Clone disposable DBeaver targets
+        run: |
+          git clone --depth 1 --branch '${{ steps.matrix.outputs.ref }}' https://github.com/dbeaver/dbeaver.git ../dbeaver-target
+          git clone --depth 1 --branch devel https://github.com/dbeaver/dbeaver-common.git ../dbeaver-common
+      - name: Validate boundaries
+        env:
+          DBEAVER_UPSTREAM: ${{ github.workspace }}/../dbeaver-target
+        run: ./scripts/validate.sh
+      - name: Build P2 repository
+        env:
+          DBEAVER_UPSTREAM: ${{ github.workspace }}/../dbeaver-target
+          DBEAVER_COMMON: ${{ github.workspace }}/../dbeaver-common
+        run: ./scripts/build.sh
+      - name: Run unit and contract tests
+        env:
+          DBEAVER_UPSTREAM: ${{ github.workspace }}/../dbeaver-target
+        run: ./scripts/test.sh
+      - name: Generate release metadata
+        env:
+          DBEAVER_UPSTREAM: ${{ github.workspace }}/../dbeaver-target
+        run: |
+          ./scripts/compat-report.sh > dist/compatibility-report.json
+          ./scripts/generate-sbom.py
+          (cd dist && sha256sum -- *.zip *.json > SHA256SUMS)
+      - name: Upload P2 repository
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbeaver-mcp-teststudio-p2
+          path: dist/
+          if-no-files-found: error
+
+  database-e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    needs: build-test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y jq rsync
+      - name: Clone disposable build targets
+        run: |
+          ref=$(jq -r '.supported[] | select(.name=="current") | .dbeaver_ref' config/compatibility-matrix.json)
+          git clone --depth 1 --branch "$ref" https://github.com/dbeaver/dbeaver.git ../dbeaver-target
+          git clone --depth 1 --branch devel https://github.com/dbeaver/dbeaver-common.git ../dbeaver-common
+      - name: Build adapters
+        env:
+          DBEAVER_UPSTREAM: ${{ github.workspace }}/../dbeaver-target
+          DBEAVER_COMMON: ${{ github.workspace }}/../dbeaver-common
+        run: ./scripts/build.sh
+      - name: PostgreSQL and MySQL rollback E2E
+        env:
+          DBEAVER_UPSTREAM: ${{ github.workspace }}/../dbeaver-target
+          DBEAVER_COMMON: ${{ github.workspace }}/../dbeaver-common
+        run: ./scripts/e2e-databases.sh

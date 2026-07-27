@@ -1,0 +1,18 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Vendor: DBeaver MCP Fork
+Bundle-Name: DBeaver Test Studio Compatibility Bridge for DBeaver 26
+Bundle-SymbolicName: org.jkiss.dbeaver.teststudio.compat.dbeaver26;singleton:=true
+Bundle-Version: 2.0.0.qualifier
+Bundle-RequiredExecutionEnvironment: JavaSE-21
+Bundle-ActivationPolicy: lazy
+Require-Bundle: org.eclipse.core.runtime,
+ org.eclipse.ui,
+ org.eclipse.jface,
+ org.eclipse.swt,
+ org.jkiss.dbeaver.model,
+ org.jkiss.dbeaver.registry,
+ org.jkiss.dbeaver.ui,
+ org.jkiss.dbeaver.teststudio.core
+Import-Package: com.google.gson
+Automatic-Module-Name: org.jkiss.dbeaver.teststudio.compat.dbeaver26

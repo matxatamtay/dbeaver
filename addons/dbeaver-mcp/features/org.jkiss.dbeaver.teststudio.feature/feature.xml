@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="org.jkiss.dbeaver.teststudio.feature"
+      label="AI Database Test Studio for DBeaver"
+      version="2.0.0.qualifier"
+      provider-name="DBeaver MCP Fork">
+
+   <description>
+      Deterministic database test plans, fixtures, assertions, cleanup, evidence, reports, native UI, AI provider SPI, and database adapters.
+   </description>
+
+   <copyright>DBeaver Corp and others</copyright>
+
+   <requires>
+      <import feature="org.jkiss.dbeaver.mcp.feature" version="1.6.0" match="greaterOrEqual"/>
+   </requires>
+
+   <plugin id="org.jkiss.dbeaver.teststudio.core" download-size="0" install-size="0" version="0.0.0" unpack="false"/>
+   <plugin id="org.jkiss.dbeaver.teststudio.compat.dbeaver26" download-size="0" install-size="0" version="0.0.0" unpack="false"/>
+   <plugin id="org.jkiss.dbeaver.teststudio.ui" download-size="0" install-size="0" version="0.0.0" unpack="false"/>
+   <plugin id="org.jkiss.dbeaver.teststudio.ai" download-size="0" install-size="0" version="0.0.0" unpack="false"/>
+   <plugin id="org.jkiss.dbeaver.teststudio.db.postgresql" download-size="0" install-size="0" version="0.0.0" unpack="false"/>
+   <plugin id="org.jkiss.dbeaver.teststudio.db.mysql" download-size="0" install-size="0" version="0.0.0" unpack="false"/>
+   <plugin id="org.jkiss.dbeaver.teststudio.db.sqlite" download-size="0" install-size="0" version="0.0.0" unpack="false"/>
+</feature>

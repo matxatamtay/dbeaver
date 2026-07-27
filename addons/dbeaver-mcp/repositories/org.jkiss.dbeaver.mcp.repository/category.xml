@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+  <description name="DBeaver MCP and AI Database Test Studio">
+    Installable, additive DBeaver MCP and AI Database Test Studio features.
+  </description>
+  <feature id="org.jkiss.dbeaver.mcp.feature">
+    <category name="org.jkiss.dbeaver.mcp.category"/>
+  </feature>
+  <feature id="org.jkiss.dbeaver.teststudio.feature">
+    <category name="org.jkiss.dbeaver.teststudio.category"/>
+  </feature>
+  <category-def name="org.jkiss.dbeaver.mcp.category" label="DBeaver MCP Server"/>
+  <category-def name="org.jkiss.dbeaver.teststudio.category" label="AI Database Test Studio"/>
+</site>

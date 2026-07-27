@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+  <extension-point id="bridge" name="Test Studio DBeaver Bridge" schema="schema/bridge.exsd"/>
+  <extension-point id="assertionProvider" name="Test Studio Assertion Provider" schema="schema/assertionProvider.exsd"/>
+  <extension-point id="reportProvider" name="Test Studio Report Provider" schema="schema/reportProvider.exsd"/>
+  <extension-point id="aiProvider" name="Test Studio AI Provider" schema="schema/aiProvider.exsd"/>
+  <extension-point id="databaseAdapter" name="Test Studio Database Adapter" schema="schema/databaseAdapter.exsd"/>
+  <extension point="org.jkiss.dbeaver.mcp.toolProvider">
+    <provider class="org.jkiss.dbeaver.teststudio.core.TestStudioToolProvider" priority="200"/>
+  </extension>
+</plugin>

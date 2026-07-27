@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="org.jkiss.dbeaver.mcp.feature"
+      label="DBeaver MCP Server"
+      version="1.6.0.qualifier"
+      provider-name="DBeaver MCP Fork">
+
+   <copyright>DBeaver Corp and others</copyright>
+
+   <plugin
+         id="org.jkiss.dbeaver.mcp"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+</feature>

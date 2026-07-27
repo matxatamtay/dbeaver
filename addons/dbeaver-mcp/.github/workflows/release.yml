@@ -1,0 +1,44 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y jq rsync
+      - name: Clone current supported DBeaver
+        run: |
+          ref=$(jq -r '.supported[] | select(.name=="current") | .dbeaver_ref' config/compatibility-matrix.json)
+          git clone --depth 1 --branch "$ref" https://github.com/dbeaver/dbeaver.git ../dbeaver-target
+          git clone --depth 1 --branch devel https://github.com/dbeaver/dbeaver-common.git ../dbeaver-common
+      - name: Build release
+        env:
+          DBEAVER_UPSTREAM: ${{ github.workspace }}/../dbeaver-target
+          DBEAVER_COMMON: ${{ github.workspace }}/../dbeaver-common
+        run: |
+          ./scripts/release.sh
+          ./scripts/e2e-databases.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: dist/
+      - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: dist/*
+          generate_release_notes: true

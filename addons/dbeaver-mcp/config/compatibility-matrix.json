@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "supported": [
+    {
+      "name": "current",
+      "dbeaver_ref": "26.1.3",
+      "required": true
+    },
+    {
+      "name": "previous",
+      "dbeaver_ref": "26.0.5",
+      "required": true
+    }
+  ],
+  "best_effort": [
+    {
+      "name": "devel",
+      "dbeaver_ref": "devel",
+      "required": false
+    }
+  ],
+  "common_ref": "devel",
+  "java": 21,
+  "policy": "Current stable and previous minor are supported; devel is a weekly best-effort compatibility probe."
+}

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+  <extension point="org.eclipse.ui.views">
+    <category id="org.jkiss.dbeaver.teststudio.category" name="AI Database Test Studio"/>
+    <view
+      id="org.jkiss.dbeaver.teststudio.ui.view"
+      name="AI Database Test Studio"
+      category="org.jkiss.dbeaver.teststudio.category"
+      class="org.jkiss.dbeaver.teststudio.ui.TestStudioView"
+      restorable="true"/>
+  </extension>
+  <extension point="org.eclipse.ui.editors">
+    <editor
+      id="org.jkiss.dbeaver.teststudio.ui.planEditor"
+      name="Database Test Plan"
+      class="org.jkiss.dbeaver.teststudio.ui.TestPlanEditor"
+      filenames="*.dbtest.json"
+      contributorClass="org.eclipse.ui.texteditor.BasicTextEditorActionContributor"
+      default="true"/>
+  </extension>
+  <extension point="org.eclipse.ui.commands">
+    <category id="org.jkiss.dbeaver.teststudio.commands" name="AI Database Test Studio"/>
+    <command id="org.jkiss.dbeaver.teststudio.open" name="Open AI Database Test Studio" categoryId="org.jkiss.dbeaver.teststudio.commands"/>
+    <command id="org.jkiss.dbeaver.teststudio.refresh" name="Refresh AI Database Test Studio" categoryId="org.jkiss.dbeaver.teststudio.commands"/>
+  </extension>
+  <extension point="org.eclipse.ui.handlers">
+    <handler commandId="org.jkiss.dbeaver.teststudio.open" class="org.jkiss.dbeaver.teststudio.ui.OpenTestStudioHandler"/>
+    <handler commandId="org.jkiss.dbeaver.teststudio.refresh" class="org.jkiss.dbeaver.teststudio.ui.RefreshTestStudioHandler"/>
+  </extension>
+  <extension point="org.eclipse.ui.menus">
+    <menuContribution locationURI="menu:org.eclipse.ui.main.menu?after=additions">
+      <menu id="org.jkiss.dbeaver.teststudio.menu" label="Test Studio">
+        <command commandId="org.jkiss.dbeaver.teststudio.open" label="Open AI Database Test Studio" style="push"/>
+        <command commandId="org.jkiss.dbeaver.teststudio.refresh" label="Refresh" style="push"/>
+      </menu>
+    </menuContribution>
+    <menuContribution locationURI="toolbar:org.jkiss.dbeaver.teststudio.ui.view">
+      <command commandId="org.jkiss.dbeaver.teststudio.refresh" label="Refresh" style="push"/>
+    </menuContribution>
+  </extension>
+</plugin>
