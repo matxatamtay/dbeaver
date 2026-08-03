@@ -73,7 +73,7 @@ assert 'dbeaver_teststudio' in names
 for response in (discover,cap,commands,validation): assert not response.get('isError',False),response
 d=discover['structuredContent']; c=cap['structuredContent']; cmd=commands['structuredContent']; v=validation['structuredContent']
 assert d['count']>=44,d
-assert c['version']=='2.0.1',c
+assert c['version']=='2.0.2',c
 assert c['extensions']['bridge']=='dbeaver-26',c
 assert c['assertions']['count']>=27,c
 assert c['reports']['count']>=4,c

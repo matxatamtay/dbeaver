@@ -21,7 +21,7 @@ The resulting installable repository is:
 
 ```text
 product/repositories/org.jkiss.dbeaver.mcp.repository/target/
-org.jkiss.dbeaver.mcp.updateSite-2.0.1-SNAPSHOT.zip
+org.jkiss.dbeaver.mcp.updateSite-2.0.2-SNAPSHOT.zip
 ```
 
 The runtime registers built-in and external `DBeaverMcpToolProvider` implementations through the `org.jkiss.dbeaver.mcp.toolProvider` Eclipse extension point. Providers receive a shared context containing the bounded job manager and active policy. One provider failure is logged without preventing the remaining providers or the MCP server from starting.

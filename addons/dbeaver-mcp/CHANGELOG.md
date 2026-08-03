@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.2 — Upstream-synchronized custom build
+
+- Re-synchronized the fork and build dependencies with the latest upstream revisions.
+- Bumped the DBeaver MCP bundle to 1.6.2 and AI Database Test Studio to 2.0.2.
+- Rebuilt the full DBeaver Community product and self-contained Debian distribution.
+
 ## 2.0.1 — Custom distribution patch release
 
 - Bumped the DBeaver MCP bundle to 1.6.1 and AI Database Test Studio to 2.0.1.
