@@ -10,6 +10,6 @@ snapshot_installed_roots "$state"
 p2 -repository "$uri" \
   -installIU org.jkiss.dbeaver.mcp.feature.feature.group,org.jkiss.dbeaver.teststudio.feature.feature.group \
   -profileProperties org.eclipse.update.install.features=true
-verify_bundle org.jkiss.dbeaver.mcp 1.6.0
-verify_bundle org.jkiss.dbeaver.teststudio.core 2.0.0
+verify_bundle org.jkiss.dbeaver.mcp 1.6.1
+verify_bundle org.jkiss.dbeaver.teststudio.core 2.0.1
 printf 'Install completed. Previous installed roots: %s\n' "$state"

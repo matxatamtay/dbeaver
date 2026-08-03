@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.1 — Custom distribution patch release
+
+- Bumped the DBeaver MCP bundle to 1.6.1 and AI Database Test Studio to 2.0.1.
+- Kept the embedded DBeaver Community base at its upstream 26.1.5 version.
+- Refreshed install verification, runtime smoke assertions, and Debian package metadata.
+
 ## 2.0.0 — AI Database Test Studio
 
 - Extracted MCP into a standalone fork-friendly source repository.

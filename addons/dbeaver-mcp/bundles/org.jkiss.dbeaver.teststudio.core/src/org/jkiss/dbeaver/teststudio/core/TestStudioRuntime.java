@@ -9,7 +9,7 @@ import org.jkiss.dbeaver.teststudio.api.TestStudioService;
 import org.jkiss.dbeaver.teststudio.spi.TestStudioAiProvider;
 
 final class TestStudioRuntime implements TestStudioService {
-   private static final String VERSION = "2.0.0";
+   private static final String VERSION = "2.0.1";
    private final DBeaverMcpContext mcp;
    private final TestPlanValidator validator = new TestPlanValidator();
    private final TestPlanMigrator migrator = new TestPlanMigrator();
